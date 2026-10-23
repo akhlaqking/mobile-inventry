@@ -3,466 +3,304 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mobile Inventory System</title>
+    <title>Mobile Repair & Accessories Inventory System</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- html2pdf.js for Invoice PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-        :root {
-            --primary: #2563eb;
-            --secondary: #64748b;
-            --danger: #ef4444;
-            --success: #22c55e;
-            --bg: #f8fafc;
-            --card: #ffffff;
-            --text: #1e293b;
+        body { font-family: 'Inter', sans-serif; }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
         }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            margin: 0;
-            padding: 20px;
-        }
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-        .card {
-            background: var(--card);
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-            margin-bottom: 20px;
-        }
-        h2 { margin-top: 0; }
-        input, select, button {
-            padding: 10px;
-            border: 1px solid #cbd5e1;
-            border-radius: 4px;
-            font-size: 16px;
-        }
-        input:focus { outline: 2px solid var(--primary); border-color: transparent; }
-        button {
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            cursor: pointer;
-            transition: opacity 0.2s;
-        }
-        button:hover { opacity: 0.9; }
-        button.secondary { background-color: var(--secondary); }
-        button.danger { background-color: var(--danger); }
-        button.success { background-color: var(--success); }
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
-        }
-        .folder-card {
-            background: #e2e8f0;
-            padding: 15px;
-            border-radius: 6px;
-            text-align: center;
-            cursor: pointer;
-            transition: transform 0.1s;
-        }
-        .folder-card:hover { transform: scale(1.02); }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
-        th, td {
-            text-align: left;
-            padding: 12px;
-            border-bottom: 1px solid #e2e8f0;
-        }
-        th { background-color: #f1f5f9; }
-        .hidden { display: none !important; }
-        .auth-form {
-            max-width: 400px;
-            margin: 100px auto auto auto;
-            text-align: center;
-        }
-        .auth-form input {
-            display: block;
-            width: 100%;
-            margin-bottom: 15px;
-            box-sizing: border-box;
-        }
-        .auth-form button { width: 100%; }
-        .alert-box {
-            background: #fee2e2;
-            border: 1px solid #fecaca;
-            color: #b91c1c;
-            padding: 10px;
-            border-radius: 4px;
-            margin-bottom: 15px;
-        }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
-<body>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
 
-<div class="container">
-    <!-- Auth Section -->
-    <div id="auth-section" class="card auth-form">
-        <h2 id="auth-title">Login</h2>
-        <input type="email" id="email" placeholder="Email Address">
-        <input type="password" id="password" placeholder="Password">
-        <button id="auth-btn" onclick="handleAuth()">Login</button>
-        <p style="margin-top: 15px; font-size: 14px;">
-            <a href="#" id="auth-toggle" onclick="toggleAuth()">Don't have an account? Create one.</a>
-        </p>
-    </div>
-
-    <!-- App Section -->
-    <div id="app-section" class="hidden">
-        
-        <!-- Header -->
-        <div class="card" style="display: flex; justify-content: space-between; align-items: center;">
-            <h2>Inventory Dashboard</h2>
-            <div>
-                <input type="text" id="search-bar" placeholder="Search parts (e.g. Oppo A5s)" oninput="searchParts()">
-                <button class="secondary" onclick="logout()">Logout</button>
-            </div>
-        </div>
-
-        <!-- Low Stock Alerts -->
-        <div id="alert-container"></div>
-
-        <!-- Folders/Boxes -->
-        <div class="card">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <h3>Categories / Boxes</h3>
+    <!-- TOP NAVIGATION BAR -->
+    <header id="mainHeader" class="bg-slate-900 text-white sticky top-0 z-40 shadow-lg hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+            <!-- Logo & Title -->
+            <div class="flex items-center gap-3 cursor-pointer" onclick="navigateToFolder(null)">
+                <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center font-bold text-xl shadow-md text-white">
+                    <i class="fa-solid fa-mobile-screen"></i>
+                </div>
                 <div>
-                    <input type="text" id="new-box-name" placeholder="Box Name">
-                    <button onclick="addNewBox()">Add Box</button>
+                    <h1 class="font-bold text-lg leading-tight tracking-wide">Mobile Inventory Pro</h1>
+                    <p class="text-xs text-slate-400 font-medium">Stock & Billing Manager</p>
                 </div>
             </div>
-            <div id="box-grid" class="grid"></div>
-        </div>
 
-        <!-- Inventory Inside Selected Box -->
-        <div id="inventory-card" class="card hidden">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <h3 id="current-box-title">Box Inventory</h3>
-                <div>
-                    <input type="text" id="item-name" placeholder="Part Name">
-                    <input type="number" id="item-price" placeholder="Price">
-                    <input type="number" id="item-qty" placeholder="Quantity">
-                    <button class="success" onclick="addNewItem()">Add Item</button>
-                    <button class="danger" onclick="deleteCurrentBox()">Delete Box</button>
+            <!-- Global Search Input -->
+            <div class="flex-1 max-w-md relative">
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </span>
+                    <input type="text" id="globalSearchInput" oninput="handleGlobalSearch(this.value)" 
+                        placeholder="Search items, models (e.g. Oppo A5s, iPhone 11)..." 
+                        class="w-full pl-10 pr-10 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-slate-900 transition">
+                    <button id="clearSearchBtn" onclick="clearGlobalSearch()" class="hidden absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-white">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <!-- Live Search Results Dropdown -->
+                <div id="searchResultsDropdown" class="hidden absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl border border-slate-200 z-50 max-h-96 overflow-y-auto custom-scrollbar p-2 text-slate-800"></div>
+            </div>
+
+            <!-- User Menu & Active Bill Count -->
+            <div class="flex items-center gap-3">
+                <button onclick="toggleBillingDrawer()" class="relative bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-lg font-medium text-sm transition flex items-center gap-2 shadow-sm">
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+                    <span class="hidden sm:inline">Active Bill</span>
+                    <span id="billBadge" class="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center">0</span>
+                </button>
+                <div class="relative group">
+                    <button class="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 px-3 py-2 rounded-lg border border-slate-700 text-sm transition">
+                        <i class="fa-solid fa-user-circle text-indigo-400 text-lg"></i>
+                        <span id="userNameDisplay" class="font-medium text-slate-200 hidden md:inline">User</span>
+                        <i class="fa-solid fa-chevron-down text-xs text-slate-400"></i>
+                    </button>
+                    <div class="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-200 py-1 hidden group-hover:block z-50 text-slate-700">
+                        <div class="px-4 py-2 border-b border-slate-100">
+                            <p class="text-xs text-slate-400 font-medium">Logged in as</p>
+                            <p id="userEmailDisplay" class="text-sm font-semibold truncate text-slate-800"></p>
+                        </div>
+                        <button onclick="logout()" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition">
+                            <i class="fa-solid fa-right-from-bracket"></i>
+                            Logout
+                        </button>
+                    </div>
                 </div>
             </div>
-            <table id="inventory-table">
-                <thead>
-                    <tr>
-                        <th>Part Name</th>
-                        <th>Price</th>
-                        <th>Quantity</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="inventory-body"></tbody>
-            </table>
         </div>
+    </header>
 
-        <!-- Daily Sales History -->
-        <div class="card">
-            <h3>Daily Sales Report</h3>
-            <div style="margin-bottom: 15px;">
-                <strong>Total Sales Today:</strong> <span id="daily-total">0</span>
+    <!-- AUTHENTICATION SCREEN -->
+    <main id="authContainer" class="flex-1 flex items-center justify-center p-4">
+        <div class="w-full max-w-md bg-white rounded-2xl shadow-xl border border-slate-200 p-8 transition-all">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-indigo-600 text-white rounded-2xl flex items-center justify-center text-3xl mx-auto shadow-lg mb-3">
+                    <i class="fa-solid fa-boxes-stacked"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-slate-800">Mobile Stock Manager</h2>
+                <p class="text-slate-500 text-sm mt-1">Sign in to manage your wholesale inventory</p>
             </div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Item</th>
-                        <th>Qty Sold</th>
-                        <th>Total Price</th>
-                    </tr>
-                </thead>
-                <tbody id="sales-history-body"></tbody>
-            </table>
-            <button class="secondary" onclick="clearSalesHistory()">Clear Sales History</button>
+
+            <!-- Auth Form Switch Tabs -->
+            <div class="flex rounded-lg bg-slate-100 p-1 mb-6 text-sm font-medium">
+                <button id="tabLogin" onclick="switchAuthTab('login')" class="flex-1 py-2 rounded-md bg-white text-indigo-600 shadow-sm transition">Login</button>
+                <button id="tabSignup" onclick="switchAuthTab('signup')" class="flex-1 py-2 rounded-md text-slate-600 hover:text-slate-900 transition">Create Account</button>
+            </div>
+
+            <form id="authForm" onsubmit="handleAuthSubmit(event)">
+                <div id="signupNameGroup" class="mb-4 hidden">
+                    <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Full Name / Shop Name</label>
+                    <input type="text" id="authName" placeholder="e.g. Unique Mobile Wholesale" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition text-sm">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Email Address</label>
+                    <input type="email" id="authEmail" required placeholder="name@shop.com" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition text-sm">
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Password</label>
+                    <input type="password" id="authPassword" required placeholder="••••••••" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition text-sm">
+                </div>
+
+                <button type="submit" id="authSubmitBtn" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition flex items-center justify-center gap-2">
+                    <span>Login to Dashboard</span>
+                    <i class="fa-solid fa-arrow-right text-sm"></i>
+                </button>
+            </form>
+        </div>
+    </main>
+
+    <!-- MAIN APP DASHBOARD -->
+    <div id="dashboardContainer" class="flex-1 hidden max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        
+        <!-- TOP BREADCRUMB & CONTROLS BAR -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 mb-6 flex flex-wrap items-center justify-between gap-4">
+            
+            <!-- Dynamic Path Navigation (Breadcrumbs) -->
+            <nav id="breadcrumbNav" class="flex items-center gap-2 flex-wrap text-sm font-medium text-slate-600">
+                <!-- Injected dynamically -->
+            </nav>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center gap-2">
+                <button onclick="openModal('addFolderModal')" class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-xl text-sm font-medium transition flex items-center gap-2 shadow-sm">
+                    <i class="fa-solid fa-folder-plus text-indigo-400"></i>
+                    <span>New Folder</span>
+                </button>
+                <button onclick="openModal('addItemModal')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition flex items-center gap-2 shadow-sm">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Add Item / Stock</span>
+                </button>
+            </div>
         </div>
 
+        <!-- MAIN CONTENT LAYOUT GRID -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+
+            <!-- LEFT 3 COLS: INVENTORY DISPLAY -->
+            <div class="lg:col-span-3 space-y-6">
+
+                <!-- Low Stock Alert Banner (Dynamically generated if low items exist) -->
+                <div id="lowStockAlertBanner" class="hidden bg-amber-50 border border-amber-200 rounded-2xl p-4 text-amber-800 flex items-center justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center text-lg font-bold">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-sm">Low Stock Alert!</h4>
+                            <p id="lowStockAlertText" class="text-xs text-amber-700">Some items are running out of stock.</p>
+                        </div>
+                    </div>
+                    <button onclick="filterLowStockItems()" class="bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition">
+                        View Low Stock
+                    </button>
+                </div>
+
+                <!-- SUB-FOLDERS GRID SECTION -->
+                <div id="folderSection">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-folder-tree"></i>
+                        Folders & Sub-Boxes
+                    </h3>
+                    <div id="foldersGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                        <!-- Dynamic Folder Cards -->
+                    </div>
+                </div>
+
+                <!-- STOCK ITEMS TABLE SECTION -->
+                <div id="itemSection" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+                        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-boxes-stacked"></i>
+                            Items in Current Folder
+                        </h3>
+                        <span id="currentFolderItemCount" class="text-xs font-medium bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full">0 Items</span>
+                    </div>
+
+                    <div class="overflow-x-auto custom-scrollbar">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-500 text-xs font-semibold uppercase tracking-wider border-b border-slate-200">
+                                    <th class="py-3 px-4">Item & Models</th>
+                                    <th class="py-3 px-4">Location / Box</th>
+                                    <th class="py-3 px-4">Price</th>
+                                    <th class="py-3 px-4 text-center">Current Stock</th>
+                                    <th class="py-3 px-4 text-right">Quick Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="itemsTableBody" class="divide-y divide-slate-100 text-sm">
+                                <!-- Dynamic Item Rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Empty State Placeholder -->
+                    <div id="emptyFolderState" class="p-12 text-center hidden">
+                        <i class="fa-solid fa-box-open text-4xl text-slate-300 mb-3"></i>
+                        <h4 class="font-bold text-slate-700 text-base">This folder is empty</h4>
+                        <p class="text-slate-400 text-xs mt-1 mb-4">Click "Add Item / Stock" or "New Folder" to organize your inventory.</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- RIGHT 1 COL: SALES ANALYTICS & QUICK SUMMARY -->
+            <div class="space-y-6">
+                <!-- Daily Revenue Widget -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-bold text-slate-800 text-sm">Today's Sales Summary</h3>
+                        <span class="text-xs font-semibold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-md">Live</span>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <p class="text-xs text-slate-400 font-medium">Total Revenue Today</p>
+                            <p id="todayRevenueDisplay" class="text-2xl font-black text-slate-900 mt-0.5">Rs. 0</p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 text-xs">
+                            <div>
+                                <p class="text-slate-400">Items Sold Today</p>
+                                <p id="todayItemsSoldDisplay" class="font-bold text-slate-700 text-sm">0 pcs</p>
+                            </div>
+                            <div>
+                                <p class="text-slate-400">Total Invoices</p>
+                                <p id="todayInvoicesDisplay" class="font-bold text-slate-700 text-sm">0</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Sales Activity Log -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-bold text-slate-800 text-sm">Recent Sales Log</h3>
+                        <button onclick="openModal('salesHistoryModal')" class="text-xs text-indigo-600 hover:text-indigo-800 font-semibold">View All</button>
+                    </div>
+                    <div id="recentSalesLogList" class="space-y-3 text-xs custom-scrollbar max-h-80 overflow-y-auto">
+                        <!-- Dynamic Sales Log -->
+                    </div>
+                </div>
+            </div>
+
+        </div>
     </div>
-</div>
 
-<script>
-    // App State
-    let users = JSON.parse(localStorage.getItem('users')) || {};
-    let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
-    let boxes = {};
-    let salesHistory = [];
-    let isLoginMode = true;
-    let selectedBoxId = null;
+    <!-- MODAL: ADD / EDIT FOLDER -->
+    <div id="addFolderModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden border border-slate-100">
+            <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+                <h3 class="font-bold text-base flex items-center gap-2">
+                    <i class="fa-solid fa-folder-plus text-indigo-400"></i>
+                    Create New Folder / Box
+                </h3>
+                <button onclick="closeModal('addFolderModal')" class="text-slate-400 hover:text-white transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <form onsubmit="handleFolderSubmit(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">Folder or Box Name</label>
+                    <input type="text" id="folderNameInput" required placeholder="e.g. LCD Panels, Box #5, iPhone Parts" 
+                        class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm">
+                </div>
+                <div class="flex items-center justify-end gap-3 pt-2">
+                    <button type="button" onclick="closeModal('addFolderModal')" class="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 text-sm font-semibold transition">Cancel</button>
+                    <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold shadow-md transition">Save Folder</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-    // DOM Elements
-    const authSection = document.getElementById('auth-section');
-    const appSection = document.getElementById('app-section');
-    const authTitle = document.getElementById('auth-title');
-    const authBtn = document.getElementById('auth-btn');
-    const authToggle = document.getElementById('auth-toggle');
+    <!-- MODAL: ADD / EDIT ITEM -->
+    <div id="addItemModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden border border-slate-100">
+            <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+                <h3 id="itemModalTitle" class="font-bold text-base flex items-center gap-2">
+                    <i class="fa-solid fa-box-archive text-indigo-400"></i>
+                    Add Stock Item
+                </h3>
+                <button onclick="closeModal('addItemModal')" class="text-slate-400 hover:text-white transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <form onsubmit="handleItemSubmit(event)" class="p-6 space-y-4">
+                <input type="hidden" id="editingItemId">
 
-    // Initialize
-    function initApp() {
-        if (currentUser) {
-            authSection.classList.add('hidden');
-            appSection.classList.remove('hidden');
-            loadUserData();
-            renderBoxes();
-            renderSales();
-            checkLowStock();
-        } else {
-            authSection.classList.remove('hidden');
-            appSection.classList.add('hidden');
-        }
-    }
-
-    // Auth Handlers
-    function toggleAuth() {
-        isLoginMode = !isLoginMode;
-        authTitle.innerText = isLoginMode ? 'Login' : 'Create Account';
-        authBtn.innerText = isLoginMode ? 'Login' : 'Sign Up';
-        authToggle.innerText = isLoginMode ? "Don't have an account? Create one." : "Already have an account? Login.";
-    }
-
-    function handleAuth() {
-        const email = document.getElementById('email').value.trim();
-        const password = document.getElementById('password').value.trim();
-
-        if (!email || !password) return alert('Please enter both email and password.');
-
-        if (isLoginMode) {
-            if (users[email] && users[email].password === password) {
-                currentUser = email;
-                localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                initApp();
-            } else {
-                alert('Invalid email or password.');
-            }
-        } else {
-            if (users[email]) {
-                alert('User already exists.');
-            } else {
-                users[email] = { password: password, boxes: {}, sales: [] };
-                localStorage.setItem('users', JSON.stringify(users));
-                alert('Account created! Please login.');
-                toggleAuth();
-            }
-        }
-    }
-
-    function logout() {
-        localStorage.removeItem('currentUser');
-        currentUser = null;
-        initApp();
-    }
-
-    // Data Load/Save
-    function loadUserData() {
-        const userData = users[currentUser];
-        boxes = userData.boxes || {};
-        salesHistory = userData.sales || [];
-    }
-
-    function saveData() {
-        users[currentUser].boxes = boxes;
-        users[currentUser].sales = salesHistory;
-        localStorage.setItem('users', JSON.stringify(users));
-        renderBoxes();
-        renderSales();
-        checkLowStock();
-    }
-
-    // Box Handlers
-    function addNewBox() {
-        const nameInput = document.getElementById('new-box-name');
-        const boxName = nameInput.value.trim();
-        if (!boxName) return alert('Enter a box name.');
-        
-        const id = 'box_' + Date.now();
-        boxes[id] = { name: boxName, items: [] };
-        nameInput.value = '';
-        saveData();
-    }
-
-    function renderBoxes() {
-        const grid = document.getElementById('box-grid');
-        grid.innerHTML = '';
-        Object.keys(boxes).forEach(id => {
-            const div = document.createElement('div');
-            div.className = 'folder-card';
-            div.innerHTML = <strong>${boxes[id].name}</strong>;
-            div.onclick = () => selectBox(id);
-            grid.appendChild(div);
-        });
-    }
-
-    function selectBox(id) {
-        selectedBoxId = id;
-        document.getElementById('current-box-title').innerText = boxes[id].name;
-        document.getElementById('inventory-card').classList.remove('hidden');
-        renderInventory();
-    }
-
-    function deleteCurrentBox() {
-        if (!confirm('Are you sure you want to delete this box and all its contents?')) return;
-        delete boxes[selectedBoxId];
-        document.getElementById('inventory-card').classList.add('hidden');
-        selectedBoxId = null;
-        saveData();
-    }
-
-    // Inventory Handlers
-    function addNewItem() {
-        const name = document.getElementById('item-name').value.trim();
-        const price = parseFloat(document.getElementById('item-price').value);
-        const qty = parseInt(document.getElementById('item-qty').value);
-
-        if (!name || isNaN(price) || isNaN(qty)) return alert('Fill all fields correctly.');
-
-        boxes[selectedBoxId].items.push({ id: 'item_' + Date.now(), name, price, qty });
-        document.getElementById('item-name').value = '';
-        document.getElementById('item-price').value = '';
-        document.getElementById('item-qty').value = '';
-        saveData();
-        renderInventory();
-    }
-
-    function renderInventory() {
-        const body = document.getElementById('inventory-body');
-        body.innerHTML = '';
-        if (!selectedBoxId || !boxes[selectedBoxId]) return;
-
-        boxes[selectedBoxId].items.forEach(item => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${item.name}</td>
-                <td>${item.price}</td>
-                <td>${item.qty}</td>
-                <td>
-                    <button class="success" onclick="sellItem('${item.id}')">Sell</button>
-                    <button class="danger" onclick="deleteItem('${item.id}')">Delete</button>
-                </td>
-            `;
-            body.appendChild(row);
-        });
-    }
-
-    function deleteItem(itemId) {
-        if (!confirm('Delete this item?')) return;
-        boxes[selectedBoxId].items = boxes[selectedBoxId].items.filter(i => i.id !== itemId);
-        saveData();
-        renderInventory();
-    }
-
-    // Sales Handlers
-    function sellItem(itemId) {
-        let soldItem = null;
-        boxes[selectedBoxId].items.forEach(item => {
-            if (item.id === itemId) {
-                if (item.qty > 0) {
-                    item.qty--;
-                    soldItem = item;
-                } else {
-                    alert('Out of stock!');
-                }
-            }
-        });
-
-        if (soldItem) {
-            salesHistory.push({
-                date: new Date().toLocaleDateString(),
-                time: new Date().toLocaleTimeString(),
-                itemName: soldItem.name,
-                qty: 1,
-                totalPrice: soldItem.price
-            });
-            saveData();
-            renderInventory();
-        }
-    }
-
-    function renderSales() {
-        const body = document.getElementById('sales-history-body');
-        body.innerHTML = '';
-        let today = new Date().toLocaleDateString();
-        let totalToday = 0;
-
-        salesHistory.forEach(sale => {
-            if (sale.date === today) today += sale.totalPrice;
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${sale.date} ${sale.time}</td>
-                <td>${sale.itemName}</td>
-                <td>${sale.qty}</td>
-                <td>${sale.totalPrice}</td>
-            `;
-            body.appendChild(row);
-        });
-
-        document.getElementById('daily-total').innerText = totalToday;
-    }
-
-    function clearSalesHistory() {
-        if (!confirm('Clear all sales history?')) return;
-        salesHistory = [];
-        saveData();
-    }
-
-    // Search and Alerts
-    function searchParts() {
-        const query = document.getElementById('search-bar').value.toLowerCase();
-        if (!query) {
-            renderBoxes();
-            return;
-        }
-
-        const grid = document.getElementById('box-grid');
-        grid.innerHTML = '';
-        let found = false;
-
-        Object.keys(boxes).forEach(boxId => {
-            const hasItem = boxes[boxId].items.some(item => item.name.toLowerCase().includes(query));
-            if (hasItem) {
-                found = true;
-                const div = document.createElement('div');
-                div.className = 'folder-card';
-                div.innerHTML = <strong>${boxes[boxId].name}</strong><br><small style="font-size:12px;">Contains match</small>;
-                div.onclick = () => selectBox(boxId);
-                grid.appendChild(div);
-            }
-        });
-
-        if (!found) grid.innerHTML = '<p>No matching parts found.</p>';
-    }
-
-    function checkLowStock() {
-        const alertContainer = document.getElementById('alert-container');
-        alertContainer.innerHTML = '';
-        let lowItems = [];
-
-        Object.keys(boxes).forEach(boxId => {
-            boxes[boxId].items.forEach(item => {
-                if (item.qty <= 2) {
-                    lowItems.push(${item.name} in ${boxes[boxId].name} (Qty: ${item.qty}));
-                }
-            });
-        });
-
-        lowItems.forEach(msg => {
-            const div = document.createElement('div');
-            div.className = 'alert-box';
-            div.innerText = 'Low Stock Alert: ' + msg;
-            alertContainer.appendChild(div);
-        });
-    }
-
-    // Initialize on load
-    initApp();
-</script>
-
-</body>
-</html>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">Item Title / Name</label>
